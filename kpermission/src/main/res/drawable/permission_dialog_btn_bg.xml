@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?><!-- 确认对话框样式【含有图标、内容、左右两个按钮】布局文件 -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 按压时的图片资源 -->
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <!-- 填充 -->
+            <solid android:color="#8007B4A2" /><!-- 填充的颜色 -->
+            <!-- 圆角半径 -->
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+    <!-- 正常时的图片资源 -->
+    <item>
+        <shape android:shape="rectangle">
+            <!-- 填充 -->
+            <solid android:color="#07b4a2" /><!-- 填充的颜色 -->
+            <!-- 圆角半径 -->
+            <corners android:radius="8dp" />
+        </shape>
+    </item>
+
+</selector>
