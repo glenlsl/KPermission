@@ -28,7 +28,6 @@ class ActResultHelper private constructor() {
     //todo:伴生对象静态属性
     companion object {
         const val TAG = "ActResultHelper"
-        const val REQUEST_CODE = 0x99//权限请求码
         fun from(activity: FragmentActivity) = ActResultHelper(activity)
         fun from(fragment: Fragment) = ActResultHelper(fragment)
     }
@@ -77,9 +76,19 @@ class ActResultHelper private constructor() {
             callback
         )
     }
+
+    fun isShowDialog(isShow: Boolean): ActResultHelper {
+        ActResultFragment.instance.openDialog = isShow
+        return this
+    }
 }
 
+/**
+ *  空白Fragment 中转作用
+ */
 internal class ActResultFragment : Fragment() {
+    private val REQUEST_CODE = 0x99//权限请求码
+    var openDialog = true
     private val mCallbackMap = SparseArray<MutableLiveData<ActResult>>()
     //    private val mPermissionsMap = WeakHashMap<String, MutableLiveData<Permission>>()//权限申请
     private var mPermissionCallback: MutableLiveData<Boolean>? = null//权限申请
@@ -112,18 +121,20 @@ internal class ActResultFragment : Fragment() {
                     callback.invoke(it!!)
                 })
             }
-            requestPermissions(needRequests, ActResultHelper.REQUEST_CODE)
+            requestPermissions(needRequests, REQUEST_CODE)
         }
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == ActResultHelper.REQUEST_CODE) {
+        if (requestCode == REQUEST_CODE) {
             val noPermissions =
                 permissions.filterIndexed { index, _ -> grantResults[index] == PackageManager.PERMISSION_DENIED }
                     .toMutableList()
             if (noPermissions.isNotEmpty()) {
-                context?.run { PermissionRequestDialog(this, noPermissions).show() }
+                if (openDialog) {
+                    context?.run { PermissionRequestDialog(this, noPermissions).show() }
+                }
                 mPermissionCallback!!.value = false
             } else {
                 mPermissionCallback!!.value = true
