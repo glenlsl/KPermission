@@ -34,7 +34,7 @@ class ActResultHelper private constructor() {
     }
 
     private fun commitFragment(fragmentManager: FragmentManager) {
-        val fragment = (fragmentManager.findFragmentByTag(TAG) ?: ActResultFragment.getInstance()) as ActResultFragment
+        val fragment = (fragmentManager.findFragmentByTag(TAG) ?: ActResultFragment.instance) as ActResultFragment
         if (!fragment.isAdded) {
             fragmentManager.beginTransaction()
                 .add(fragment, TAG)//将响应需要用的空白fragment添加到需要响应页面绑定生命周期
@@ -44,11 +44,11 @@ class ActResultHelper private constructor() {
 
     fun startActivityForResult(intent: Intent, callback: (resultCode: Int, dataIntent: Intent?) -> Unit) {
         val mutableLiveData = MutableLiveData<ActResult>().apply {
-            observe(ActResultFragment.getInstance(), Observer {
+            observe(ActResultFragment.instance, Observer {
                 callback(it!!.resultCode, it.resultIntent)
             })
         }
-        ActResultFragment.getInstance().startActForResult(intent, mutableLiveData)
+        ActResultFragment.instance.startActForResult(intent, mutableLiveData)
     }
 
     /**
@@ -62,7 +62,7 @@ class ActResultHelper private constructor() {
     private fun checkPermission(permission: String): Boolean {
         //todo 这里的上下文获取在手动关闭权限后返回app 这时app被回收报null，fragment没有跟着被回收，暂未有好的解决办法，只能在activity中不保存fragment，让其findFragmentByTag为null
         return ContextCompat.checkSelfPermission(
-            ActResultFragment.getInstance().requireContext(),
+            ActResultFragment.instance.requireContext(),
             permission
         ) == PackageManager.PERMISSION_GRANTED//已授权
     }
@@ -72,7 +72,7 @@ class ActResultHelper private constructor() {
      */
 //    @TargetApi(Build.VERSION_CODES.M)
     fun requestPermissions(vararg permissions: String, callback: (isGranted: Boolean) -> Unit) {
-        ActResultFragment.getInstance().requestPermissions(
+        ActResultFragment.instance.requestPermissions(
             permissions.filterNot { checkPermission(it) }.toTypedArray(),
             callback
         )
@@ -108,7 +108,7 @@ internal class ActResultFragment : Fragment() {
     fun requestPermissions(needRequests: Array<String>, callback: (isGranted: Boolean) -> Unit) {
         if (needRequests.isNotEmpty()) {
             mPermissionCallback = MutableLiveData<Boolean>().apply {
-                observe(getInstance(), Observer {
+                observe(instance, Observer {
                     callback.invoke(it!!)
                 })
             }
@@ -119,8 +119,9 @@ internal class ActResultFragment : Fragment() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == ActResultHelper.REQUEST_CODE) {
-            val noPermissions = permissions.filterIndexed { index, _ -> grantResults[index] == PackageManager.PERMISSION_DENIED }
-                .toMutableList()
+            val noPermissions =
+                permissions.filterIndexed { index, _ -> grantResults[index] == PackageManager.PERMISSION_DENIED }
+                    .toMutableList()
             if (noPermissions.isNotEmpty()) {
                 context?.run { PermissionRequestDialog(this, noPermissions).show() }
                 mPermissionCallback!!.value = false
@@ -144,13 +145,10 @@ internal class ActResultFragment : Fragment() {
 
     //TODO: 单例模式
     companion object {
-        fun getInstance() = Holder.instance
+        val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+            ActResultFragment()
+        }
     }
-
-    private object Holder {
-        val instance = ActResultFragment()
-    }
-
 }
 
 data class ActResult(var resultCode: Int, val resultIntent: Intent? = null)

@@ -61,9 +61,7 @@ class PermissionRequestDialog @JvmOverloads constructor(
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
             val uri = Uri.fromParts("package", context.packageName, null)
             intent.data = uri
-            ActResultHelper.from(ActResultFragment.getInstance()).startActivityForResult(intent) { _, _ ->
-            }
-
+            ActResultFragment.instance.startActivity(intent)
             dismiss()
         }
     }
@@ -81,7 +79,13 @@ class SimpleDataAdapter : RecyclerView.Adapter<ViewHolder>() {
 }
 
 class ViewHolder(parent: ViewGroup) :
-    RecyclerView.ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.dialog_permission_item, parent, false)) {
+    RecyclerView.ViewHolder(
+        LayoutInflater.from(parent.context).inflate(
+            R.layout.dialog_permission_item,
+            parent,
+            false
+        )
+    ) {
 
     fun initWeight(item: RecyclerItem) {
         itemView.permissionTv1.text = item.title
