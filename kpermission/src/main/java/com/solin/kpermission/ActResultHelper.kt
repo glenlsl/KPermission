@@ -72,7 +72,6 @@ class ActResultHelper private constructor() {
      */
 //    @TargetApi(Build.VERSION_CODES.M)
     fun requestPermissions(vararg permissions: String, callback: (isGranted: Boolean) -> Unit) {
-//    fun requestPermissions(vararg permissions: String, callback: (permission: String, isGranted: Boolean) -> Unit) {
         ActResultFragment.getInstance().requestPermissions(
             permissions.filterNot { checkPermission(it) }.toTypedArray(),
             callback
@@ -107,18 +106,6 @@ internal class ActResultFragment : Fragment() {
     }
 
     fun requestPermissions(needRequests: Array<String>, callback: (isGranted: Boolean) -> Unit) {
-        /*fun requestPermissions(needRequests: Array<String>, callback: (permission: String, isGranted: Boolean) -> Unit) {
-            for (permission in needRequests) {
-                if (!mPermissionsMap.containsKey(permission)) {
-                    val mutableLiveData = MutableLiveData<Permission>().apply {
-                        observe(ActResultFragment.getInstance(), Observer {
-                            callback.invoke(it!!.permission, it.isGranted)
-    //                        mPermissionsMap.remove(permission)
-                        })
-                    }
-                    mPermissionsMap[permission] = mutableLiveData
-                }
-            }*/
         if (needRequests.isNotEmpty()) {
             mPermissionCallback = MutableLiveData<Boolean>().apply {
                 observe(getInstance(), Observer {
@@ -132,13 +119,6 @@ internal class ActResultFragment : Fragment() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == ActResultHelper.REQUEST_CODE) {
-            /*for ((index, permission) in permissions.withIndex()) {
-                mPermissionsMap[permission]?.let {
-                    val isGranted = grantResults[index] == PackageManager.PERMISSION_GRANTED
-                    it.value = Permission(permission, isGranted)
-                }
-            }
-            mPermissionsMap.remove(requestCode)*/
             val noPermissions = permissions.filterIndexed { index, _ -> grantResults[index] == PackageManager.PERMISSION_DENIED }
                 .toMutableList()
             if (noPermissions.isNotEmpty()) {
@@ -173,5 +153,4 @@ internal class ActResultFragment : Fragment() {
 
 }
 
-//data class Permission(var permission: String, var isGranted: Boolean)
 data class ActResult(var resultCode: Int, val resultIntent: Intent? = null)
