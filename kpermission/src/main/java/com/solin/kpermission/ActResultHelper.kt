@@ -11,6 +11,7 @@ import android.support.v4.content.ContextCompat
 import android.util.SparseArray
 import java.lang.ref.WeakReference
 import kotlin.random.Random
+import kotlin.random.nextInt
 
 /**
  *  权限申请、结果反馈以回调形式封装
@@ -174,12 +175,12 @@ internal class ActResultFragment : Fragment() {
     }
 
     /**
-     * 返回随机数
+     * 返回999-65535之间的随机数
      */
     private fun makeRequestCode(): Int {
         var requestCode: Int
         do {
-            requestCode = Random.nextBits(16)//请求码要求最多16位数
+            requestCode = Random.nextInt(999..65535)
         } while (mCallbackMap.indexOfKey(requestCode) >= 0)
         return requestCode
     }
