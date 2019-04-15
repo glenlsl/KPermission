@@ -19,7 +19,7 @@ import kotlinx.android.synthetic.main.dialog_permission_item.view.*
  *  @author Solin
  *  @time 2018-4-4 12:22
  */
-class PermissionRequestDialog @JvmOverloads constructor(
+open class PermissionRequestDialog @JvmOverloads constructor(
     context: Context,
     mutableList: MutableList<String>,
     themeResId: Int = R.style.style_permission_dialog
@@ -28,8 +28,8 @@ class PermissionRequestDialog @JvmOverloads constructor(
     private val datas = mutableListOf<RecyclerItem>()
 
     init {
-        setCanceledOnTouchOutside(true)
-        setCancelable(true)
+//        setCanceledOnTouchOutside(true)
+//        setCancelable(true)
         datas.clear()
         var count = mutableList.size
         for (permission in mutableList) {
@@ -52,6 +52,10 @@ class PermissionRequestDialog @JvmOverloads constructor(
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.dialog_permission)//todo 布局
+        initView()
+    }
+
+    open fun initView() {
         recyclerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
         val adapter = SimpleDataAdapter()
         recyclerView.adapter = adapter

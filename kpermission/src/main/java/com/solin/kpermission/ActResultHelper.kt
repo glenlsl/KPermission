@@ -1,7 +1,7 @@
 package com.solin.kpermission
 
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.Observer
+import android.arch.lifecycle.*
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -16,20 +16,37 @@ import android.util.SparseArray
  *  @author Solin
  *  @time 2018-4-2 14:13
  */
-class ActResultHelper private constructor() {
+class ActResultHelper : LifecycleObserver {
+
+    private constructor() : super()
+
     private constructor(activity: FragmentActivity) : this() {
         commitFragment(activity.supportFragmentManager)
+        activity.lifecycle.addObserver(this)
     }
 
     private constructor(fragment: Fragment) : this() {
         commitFragment(fragment.childFragmentManager)
+        fragment.lifecycle.addObserver(this)
     }
 
     //todo:伴生对象静态属性
     companion object {
         const val TAG = "ActResultHelper"
-        fun from(activity: FragmentActivity) = ActResultHelper(activity)
-        fun from(fragment: Fragment) = ActResultHelper(fragment)
+        private var instance: ActResultHelper? = null
+        fun from(activity: FragmentActivity): ActResultHelper {
+            if (instance == null) {
+                instance = ActResultHelper(activity)
+            }
+            return instance!!
+        }
+
+        fun from(fragment: Fragment): ActResultHelper {
+            if (instance == null) {
+                instance = ActResultHelper(fragment)
+            }
+            return instance!!
+        }
     }
 
     private fun commitFragment(fragmentManager: FragmentManager) {
@@ -80,6 +97,26 @@ class ActResultHelper private constructor() {
     fun isShowDialog(isShow: Boolean): ActResultHelper {
         ActResultFragment.instance.openDialog = isShow
         return this
+    }
+
+    @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
+    fun <T : Context> T.destroy() {
+//        val temp =LifecycleRegistry()
+        var fm: FragmentManager? = null
+        if (this is FragmentActivity) {
+            fm = supportFragmentManager
+        } else if (this is Fragment) {
+            fm = childFragmentManager
+        }
+        fm?.let {
+            val fragment = (it.findFragmentByTag(TAG) ?: ActResultFragment.instance) as ActResultFragment
+            if (fragment.isAdded) {
+                it.beginTransaction()
+                    .remove(fragment)//将响应需要用的空白fragment添加到需要响应页面绑定生命周期
+                    .commitNow()
+            }
+        }
+        instance = null
     }
 }
 
