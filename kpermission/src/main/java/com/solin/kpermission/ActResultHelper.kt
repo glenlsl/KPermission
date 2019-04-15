@@ -1,7 +1,6 @@
 package com.solin.kpermission
 
 import android.arch.lifecycle.*
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -11,6 +10,7 @@ import android.support.v4.app.FragmentManager
 import android.support.v4.content.ContextCompat
 import android.util.SparseArray
 import java.lang.ref.WeakReference
+import kotlin.random.Random
 
 /**
  *  权限申请、结果反馈以回调形式封装
@@ -174,13 +174,12 @@ internal class ActResultFragment : Fragment() {
     }
 
     /**
-     * 返回999-65535之间的随机数
+     * 返回随机数
      */
     private fun makeRequestCode(): Int {
         var requestCode: Int
-        val intRange = 0x3e7..0xFFFF
         do {
-            requestCode = intRange.shuffled().last()
+            requestCode = Random.nextBits(32)
         } while (mCallbackMap.indexOfKey(requestCode) >= 0)
         return requestCode
     }
