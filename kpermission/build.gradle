@@ -55,8 +55,8 @@ publish {
     userOrg = 'glenlsl'
     groupId = 'com.solin'
     artifactId = 'KPermission'
-    publishVersion = '0.1.6'
-    desc = '超轻量级 权限申请'
+    publishVersion = "$kpermissionVersion"
+    desc = 'Ultra-lightweight permission application and callback startActivityForResult'
     website = 'https://github.com/glenlsl/KPermission'
 }
 

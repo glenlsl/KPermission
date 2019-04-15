@@ -30,6 +30,9 @@ allprojects {
         options.addStringOption('encoding', 'UTF-8')
     }
 }
+ext{
+    kpermissionVersion="0.1.7"
+}
 
 task clean(type: Delete) {
     delete rootProject.buildDir
