@@ -10,6 +10,7 @@ import android.support.v4.app.FragmentActivity
 import android.support.v4.app.FragmentManager
 import android.support.v4.content.ContextCompat
 import android.util.SparseArray
+import java.lang.ref.WeakReference
 
 /**
  *  权限申请、结果反馈以回调形式封装
@@ -17,16 +18,20 @@ import android.util.SparseArray
  *  @time 2018-4-2 14:13
  */
 class ActResultHelper : LifecycleObserver {
+    private var activity: WeakReference<FragmentActivity>? = null
+    private var fragment: WeakReference<Fragment>? = null
 
     private constructor() : super()
 
     private constructor(activity: FragmentActivity) : this() {
-        commitFragment(activity.supportFragmentManager)
+        this.activity = WeakReference(activity)
+        commitFragment(this.activity!!.get()!!.supportFragmentManager)
         activity.lifecycle.addObserver(this)
     }
 
     private constructor(fragment: Fragment) : this() {
-        commitFragment(fragment.childFragmentManager)
+        this.fragment = WeakReference(fragment)
+        commitFragment(this.fragment!!.get()!!.childFragmentManager)
         fragment.lifecycle.addObserver(this)
     }
 
@@ -100,23 +105,12 @@ class ActResultHelper : LifecycleObserver {
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    fun <T : Context> T.destroy() {
-//        val temp =LifecycleRegistry()
-        var fm: FragmentManager? = null
-        if (this is FragmentActivity) {
-            fm = supportFragmentManager
-        } else if (this is Fragment) {
-            fm = childFragmentManager
+    fun destroy() {
+        instance = instance?.run {
+            activity = null
+            fragment = null
+            null
         }
-        fm?.let {
-            val fragment = (it.findFragmentByTag(TAG) ?: ActResultFragment.instance) as ActResultFragment
-            if (fragment.isAdded) {
-                it.beginTransaction()
-                    .remove(fragment)//将响应需要用的空白fragment添加到需要响应页面绑定生命周期
-                    .commitNow()
-            }
-        }
-        instance = null
     }
 }
 
