@@ -179,7 +179,7 @@ internal class ActResultFragment : Fragment() {
     private fun makeRequestCode(): Int {
         var requestCode: Int
         do {
-            requestCode = Random.nextBits(32)
+            requestCode = Random.nextBits(16)//请求码要求最多16位数
         } while (mCallbackMap.indexOfKey(requestCode) >= 0)
         return requestCode
     }
