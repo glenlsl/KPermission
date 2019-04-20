@@ -94,14 +94,11 @@ class ActResultHelper : LifecycleObserver {
      */
 //    @TargetApi(Build.VERSION_CODES.M)
     fun requestPermissions(vararg permissions: String, callback: (isGranted: Boolean) -> Unit) {
-        val array = permissions.filterNot { checkPermission(it) }
+        val array = permissions.filterNot { checkPermission(it) }.toTypedArray()
         if (array.isEmpty()) {
             callback.invoke(true)
         } else {
-            ActResultFragment.instance.requestPermissions(
-                permissions.filterNot { checkPermission(it) }.toTypedArray(),
-                callback
-            )
+            ActResultFragment.instance.requestPermissions(array, callback)
         }
     }
 
