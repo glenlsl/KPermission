@@ -94,10 +94,15 @@ class ActResultHelper : LifecycleObserver {
      */
 //    @TargetApi(Build.VERSION_CODES.M)
     fun requestPermissions(vararg permissions: String, callback: (isGranted: Boolean) -> Unit) {
-        ActResultFragment.instance.requestPermissions(
-            permissions.filterNot { checkPermission(it) }.toTypedArray(),
-            callback
-        )
+        val array = permissions.filterNot { checkPermission(it) }
+        if (array.isEmpty()) {
+            callback.invoke(true)
+        } else {
+            ActResultFragment.instance.requestPermissions(
+                permissions.filterNot { checkPermission(it) }.toTypedArray(),
+                callback
+            )
+        }
     }
 
     fun isShowDialog(isShow: Boolean): ActResultHelper {
@@ -106,7 +111,7 @@ class ActResultHelper : LifecycleObserver {
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    fun destroy() {
+    private fun destroy() {
         instance = instance?.run {
             activity = null
             fragment = null
