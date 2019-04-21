@@ -3,4 +3,5 @@
     <string name="dialogPermissionTitle">必要权限缺少</string>
     <string name="dialogPermissionPrompt">为了您能正常使用，需要以下权限↓</string>
     <string name="dialogPermissionBtn">去设置授权</string>
+    <string name="permission_dialog_cancelbtn_bg">取消</string>
 </resources>

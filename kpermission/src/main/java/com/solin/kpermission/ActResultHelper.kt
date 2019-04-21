@@ -1,17 +1,15 @@
 package com.solin.kpermission
 
+import android.Manifest
 import android.arch.lifecycle.*
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Bundle
+import android.os.Build
 import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentActivity
 import android.support.v4.app.FragmentManager
 import android.support.v4.content.ContextCompat
-import android.util.SparseArray
 import java.lang.ref.WeakReference
-import kotlin.random.Random
-import kotlin.random.nextInt
 
 /**
  *  权限申请、结果反馈以回调形式封装
@@ -81,7 +79,7 @@ class ActResultHelper : LifecycleObserver {
             for (permission in permissions) hasPermission(permission, checkPermission(permission))
         }
 
-    private fun checkPermission(permission: String): Boolean {
+    fun checkPermission(permission: String): Boolean {
         //todo 这里的上下文获取在手动关闭权限后返回app 这时app被回收报null，fragment没有跟着被回收，暂未有好的解决办法，只能在activity中不保存fragment，让其findFragmentByTag为null
         return ContextCompat.checkSelfPermission(
             ActResultFragment.instance.requireContext(),
@@ -102,6 +100,57 @@ class ActResultHelper : LifecycleObserver {
         }
     }
 
+    /**
+     * 按功能获取权限
+     * @param types APK_PERMISSION,FILE_PERMISSION
+     */
+    fun requestPermissions(@PermissionType vararg types: Int, callback: (isGranted: Boolean) -> Unit) {
+        val set = mutableSetOf<String>()
+        for (type in types) {
+            set.addAll(
+                when (type) {
+                    PermissionType.APK_PERMISSION -> getApkPermissions()//apk下载安装
+                    PermissionType.FILE_PERMISSION -> getFilePermissions()//文件存储
+                    else -> arrayOf()
+                }
+            )
+        }
+        val permissions = set.filterNot { checkPermission(it) }.toTypedArray()
+        if (permissions.isEmpty()) {
+            callback.invoke(true)
+        } else {
+            ActResultFragment.instance.requestPermissions(permissions, callback)
+        }
+    }
+
+    private fun getApkPermissions(): Array<String> {
+        val mutableSet = mutableSetOf<String>()
+        mutableSet.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)//文件写入
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            mutableSet.add(Manifest.permission.READ_EXTERNAL_STORAGE)//文件读取
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                mutableSet.add(Manifest.permission.REQUEST_INSTALL_PACKAGES)//安装未知应用
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    ActResultFragment.instance.requireContext().let {
+                        if (it.packageManager.canRequestPackageInstalls()) {
+                            mutableSet.remove(Manifest.permission.REQUEST_INSTALL_PACKAGES)
+                        }
+                    }
+                }
+            }
+        }
+        return mutableSet.toTypedArray()
+    }
+
+    private fun getFilePermissions(): Array<String> {
+        val mutableSet = mutableSetOf<String>()
+        mutableSet.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)//"文件写入"
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            mutableSet.add(Manifest.permission.READ_EXTERNAL_STORAGE)//文件读取
+        }
+        return mutableSet.toTypedArray()
+    }
+
     fun isShowDialog(isShow: Boolean): ActResultHelper {
         ActResultFragment.instance.openDialog = isShow
         return this
@@ -116,83 +165,3 @@ class ActResultHelper : LifecycleObserver {
         }
     }
 }
-
-/**
- *  空白Fragment 中转作用
- */
-internal class ActResultFragment : Fragment() {
-    private val REQUEST_CODE = 0x99//权限请求码
-    var openDialog = true
-    private val mCallbackMap = SparseArray<MutableLiveData<ActResult>>()
-    //    private val mPermissionsMap = WeakHashMap<String, MutableLiveData<Permission>>()//权限申请
-    private var mPermissionCallback: MutableLiveData<Boolean>? = null//权限申请
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // 设置为 true，表示 configuration change 的时候，fragment 实例不会背重新创建
-        retainInstance = true
-    }
-
-    fun startActForResult(intent: Intent, mutableLiveData: MutableLiveData<ActResult>) {
-        val requestCode = makeRequestCode()
-        mCallbackMap.put(requestCode, mutableLiveData)
-        startActivityForResult(intent, requestCode)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (mCallbackMap.indexOfKey(requestCode) >= 0) {
-            val liveData = mCallbackMap[requestCode]
-            liveData.value = ActResult(resultCode, data)
-            mCallbackMap.remove(requestCode)
-        }
-    }
-
-    fun requestPermissions(needRequests: Array<String>, callback: (isGranted: Boolean) -> Unit) {
-        if (needRequests.isNotEmpty()) {
-            mPermissionCallback = MutableLiveData<Boolean>().apply {
-                observe(instance, Observer {
-                    callback.invoke(it!!)
-                })
-            }
-            requestPermissions(needRequests, REQUEST_CODE)
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == REQUEST_CODE) {
-            val noPermissions =
-                permissions.filterIndexed { index, _ -> grantResults[index] == PackageManager.PERMISSION_DENIED }
-                    .toMutableList()
-            if (noPermissions.isNotEmpty()) {
-                if (openDialog) {
-                    context?.run { PermissionRequestDialog(this, noPermissions).show() }
-                }
-                mPermissionCallback!!.value = false
-            } else {
-                mPermissionCallback!!.value = true
-            }
-        }
-    }
-
-    /**
-     * 返回999-65535之间的随机数
-     */
-    private fun makeRequestCode(): Int {
-        var requestCode: Int
-        do {
-            requestCode = Random.nextInt(999..65535)
-        } while (mCallbackMap.indexOfKey(requestCode) >= 0)
-        return requestCode
-    }
-
-    //TODO: 单例模式
-    companion object {
-        val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-            ActResultFragment()
-        }
-    }
-}
-
-data class ActResult(var resultCode: Int, val resultIntent: Intent? = null)

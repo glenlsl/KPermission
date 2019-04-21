@@ -4,8 +4,19 @@
                                              xmlns:tools="http://schemas.android.com/tools"
                                              android:layout_width="match_parent"
                                              android:layout_height="wrap_content"
-                                             android:background="#FFFFFF"
-                                             android:paddingBottom="8dp">
+                                             android:background="#FFFFFF">
+
+    <android.support.v7.widget.AppCompatImageView
+            android:id="@+id/imageView"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="8dp"
+            android:scaleType="fitCenter"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:srcCompat="@mipmap/permission_add"/>
 
     <android.support.v7.widget.AppCompatTextView
             android:id="@+id/textView"
@@ -64,30 +75,16 @@
             android:id="@+id/btnOk"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginRight="8dp"
             android:background="@drawable/permission_dialog_btn_bg"
             android:text="@string/dialogPermissionBtn"
             android:textAllCaps="false"
             android:textColor="#fff"
             android:textSize="15sp"
             android:textStyle="bold"
+            android:gravity="center"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/recyclerView"/>
-
-    <android.support.v7.widget.AppCompatImageView
-            android:id="@+id/imageView"
-            android:layout_width="45dp"
-            android:layout_height="45dp"
-            android:layout_marginStart="8dp"
-            android:layout_marginLeft="8dp"
-            android:layout_marginTop="8dp"
-            android:scaleType="fitCenter"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@mipmap/permission_add"/>
 
 </android.support.constraint.ConstraintLayout>
