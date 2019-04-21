@@ -9,7 +9,7 @@ buildscript {
         maven { url "https://dl.bintray.com/glenlsl/maven" }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.0'
+        classpath 'com.android.tools.build:gradle:3.3.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.novoda:bintray-release:0.9'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1'
@@ -31,7 +31,7 @@ allprojects {
     }
 }
 ext {
-    kpermissionVersion = "0.1.9"
+    kpermissionVersion = "0.2.0"
 }
 
 task clean(type: Delete) {
