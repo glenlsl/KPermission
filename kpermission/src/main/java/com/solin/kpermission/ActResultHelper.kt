@@ -100,11 +100,8 @@ class ActResultHelper : LifecycleObserver {
         }
     }
 
-    /**
-     * 按功能获取权限
-     * @param types APK_PERMISSION,FILE_PERMISSION
-     */
-    fun requestPermissions(@PermissionType vararg types: Int, callback: (isGranted: Boolean) -> Unit) {
+    //jcenter远程编译(@PermissionType vararg types: Int)不过,只能编译不带注解的可变变量
+    /*fun requestPermissions(@PermissionType vararg types: Int, callback: (isGranted: Boolean) -> Unit) {
         val set = mutableSetOf<String>()
         for (type in types) {
             set.addAll(
@@ -121,9 +118,29 @@ class ActResultHelper : LifecycleObserver {
         } else {
             ActResultFragment.instance.requestPermissions(permissions, callback)
         }
+    }*/
+    /**
+     * 按功能获取权限
+     * @param type APK_PERMISSION,FILE_PERMISSION
+     */
+    fun getPermissionsByType(@PermissionType type: Int, callback: (isGranted: Boolean) -> Unit) {
+        val permissions = getPermissions(type).filterNot { checkPermission(it) }.toTypedArray()
+        if (permissions.isEmpty()) {
+            callback.invoke(true)
+        } else {
+            ActResultFragment.instance.requestPermissions(permissions, callback)
+        }
     }
 
-    private fun getApkPermissions(): Array<String> {
+    fun getPermissions(@PermissionType type: Int): MutableSet<String> {
+        return when (type) {
+            PermissionType.APK_PERMISSION -> getApkPermissions()//apk下载安装
+            PermissionType.FILE_PERMISSION -> getFilePermissions()//文件存储
+            else -> mutableSetOf()
+        }
+    }
+
+    private fun getApkPermissions(): MutableSet<String> {
         val mutableSet = mutableSetOf<String>()
         mutableSet.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)//文件写入
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -139,16 +156,16 @@ class ActResultHelper : LifecycleObserver {
                 }
             }
         }
-        return mutableSet.toTypedArray()
+        return mutableSet
     }
 
-    private fun getFilePermissions(): Array<String> {
+    private fun getFilePermissions(): MutableSet<String> {
         val mutableSet = mutableSetOf<String>()
         mutableSet.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)//"文件写入"
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             mutableSet.add(Manifest.permission.READ_EXTERNAL_STORAGE)//文件读取
         }
-        return mutableSet.toTypedArray()
+        return mutableSet
     }
 
     fun isShowDialog(isShow: Boolean): ActResultHelper {

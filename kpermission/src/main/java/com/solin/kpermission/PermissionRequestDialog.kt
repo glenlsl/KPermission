@@ -101,7 +101,7 @@ class PermissionRequestDialog @JvmOverloads constructor(
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
             val uri = Uri.fromParts("package", context.packageName, null)
             intent.data = uri
-            ActResultHelper.from(context).startActivityForResult(intent) { resultCode, dataIntent ->
+            ActResultHelper.from(context).startActivityForResult(intent) { _, _ ->
                 ActResultHelper.from(context)
                     .checkPermissions(*adapter.datas.map { it.permission }.toTypedArray()) { permission, isGranted ->
                         if (isGranted) {
