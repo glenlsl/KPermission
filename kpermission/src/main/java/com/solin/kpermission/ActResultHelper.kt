@@ -123,7 +123,7 @@ class ActResultHelper : LifecycleObserver {
      * 按功能获取权限
      * @param type APK_PERMISSION,FILE_PERMISSION
      */
-    fun getPermissionsByType(@PermissionType type: Int, callback: (isGranted: Boolean) -> Unit) {
+    fun requestPermissionsByType(@PermissionType type: Int, callback: (isGranted: Boolean) -> Unit) {
         val permissions = getPermissions(type).filterNot { checkPermission(it) }.toTypedArray()
         if (permissions.isEmpty()) {
             callback.invoke(true)
