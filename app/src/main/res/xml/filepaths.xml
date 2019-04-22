@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <paths>
+        <!--<external-path
+                name="camera_photos"
+                path="."/>-->
+        <external-path
+                name="files_root"
+                path="Android/data/com.solin.example/"/>
+        <external-path
+                name="external_storage_root"
+                path="."/>
+
+        <!--<external-files-path
+                name="apkPath"
+                path="ApkType/"/>-->
+        <external-path
+                name="images"
+                path="./photo/"/>
+    </paths>
+
+    <!--
+        <files-path/> //代表的根目录： Context.getFilesDir()
+        <external-path/> //代表的根目录: Environment.getExternalStorageDirectory()
+        <cache-path/> //代表的根目录: getCacheDir()
+        <cache-path name="name" path="path" /> //getCacheDir()
+        <external-files-path name="name" path="path" />//getExternalFilesDir(String) Context.getExternalFilesDir(null)
+        <external-cache-path name="name" path="path" /> //Context.getExternalCacheDir()
+    -->
+</resources>

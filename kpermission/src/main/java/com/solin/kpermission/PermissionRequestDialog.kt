@@ -40,19 +40,23 @@ class PermissionRequestDialog @JvmOverloads constructor(
             when (permission) {
                 Manifest.permission.CALL_PHONE -> {
                     item.title = "拨号权限"
-                    item.describe = "允许应用拨打电话和管理通话"
+                    item.describe = "允许应用拨打电话"
                 }
                 Manifest.permission.WRITE_EXTERNAL_STORAGE -> {
                     item.title = "文件存储"
-                    item.describe = "允许应用写入存储"
+                    item.describe = """允许应用写入存储,一般为"存储空间""""
                 }
                 Manifest.permission.READ_EXTERNAL_STORAGE -> {
                     item.title = "文件读取"
-                    item.describe = "允许应用读取存储"
+                    item.describe = """允许应用读取存储,一般为"存储空间""""
                 }
                 Manifest.permission.REQUEST_INSTALL_PACKAGES -> {
                     item.title = "安装未知应用"
                     item.describe = "允许安装未知应用"
+                }
+                Manifest.permission.CAMERA -> {
+                    item.title = "拍照、相册"
+                    item.describe = "允许拍照、打开相册"
                 }
             }
             adapter.datas.add(item)

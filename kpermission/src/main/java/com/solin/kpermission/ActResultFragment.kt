@@ -5,8 +5,11 @@ import android.arch.lifecycle.Observer
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.support.design.widget.Snackbar
 import android.support.v4.app.Fragment
 import android.util.SparseArray
+import android.view.View
+import java.lang.ref.WeakReference
 import kotlin.random.Random
 import kotlin.random.nextInt
 
@@ -15,7 +18,7 @@ import kotlin.random.nextInt
  */
 internal class ActResultFragment : Fragment() {
     private val REQUEST_CODE = 0x99//权限请求码
-    var openDialog = true
+    var openDialog = false
     private val mCallbackMap = SparseArray<MutableLiveData<ActResult>>()
     //    private val mPermissionsMap = WeakHashMap<String, MutableLiveData<Permission>>()//权限申请
     private var mPermissionCallback: MutableLiveData<Boolean>? = null//权限申请
@@ -59,8 +62,17 @@ internal class ActResultFragment : Fragment() {
                 permissions.filterIndexed { index, _ -> grantResults[index] == PackageManager.PERMISSION_DENIED }
                     .toMutableList()
             if (noPermissions.isNotEmpty()) {
-                if (openDialog) {
-                    context?.run { PermissionRequestDialog(instance.activity!!, noPermissions).show() }
+                activity?.apply {
+                    if (openDialog) {
+                        PermissionRequestDialog(this, noPermissions).show()
+                    } else {
+                        window?.decorView?.findViewById<View>(android.R.id.content)?.let {
+                            Snackbar.make(it, "提示:还有有未授权的权限", Snackbar.LENGTH_LONG)
+                                .setAction("弹出未授权列表") {
+                                    PermissionRequestDialog(this, noPermissions).show()
+                                }.show()
+                        }
+                    }
                 }
                 mPermissionCallback!!.value = false
             } else {

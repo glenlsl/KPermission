@@ -4,8 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
-import com.solin.kpermission.ActResultHelper
-import com.solin.kpermission.PermissionType
+import com.solin.kpermission.*
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -32,14 +31,21 @@ class MainActivity : AppCompatActivity() {
              }
              ActResultHelper.from(this)
                  .isShowDialog(true)
-                 .requestPermissions(*array) {
+                 .requestPermissionsByType(*array) {
                      Log.e(this.localClassName, "是否成功授权:$it")
                  }*/
             //获取APK安装权限
-            ActResultHelper.from(this).requestPermissionsByType(PermissionType.APK_PERMISSION) {
-                Log.e(this.localClassName, "是否成功授权:$it")
-            }
+            ActResultHelper.from(this)
+                .isShowDialog(false)
+                .requestPermissionsByType(
+                    PermissionType.ApkType,
+                    PermissionType.FileReadWriteType,
+                    PermissionType.CameraType
+                ) {
+                    Log.e(this.localClassName, "是否成功授权:$it")
+                }
         }
     }
+
 }
 
