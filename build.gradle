@@ -31,7 +31,7 @@ allprojects {
     }
 }
 ext {
-    kpermissionVersion = "0.2.2"
+    kpermissionVersion = "0.2.3"
 }
 
 task clean(type: Delete) {

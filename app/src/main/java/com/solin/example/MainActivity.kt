@@ -38,9 +38,9 @@ class MainActivity : AppCompatActivity() {
             ActResultHelper.from(this)
                 .isShowDialog(false)
                 .requestPermissionsByType(
-                    PermissionType.ApkType,
-                    PermissionType.FileReadWriteType,
-                    PermissionType.CameraType
+                    PermissionTypeFactory.ApkType,
+                    PermissionTypeFactory.FileReadWriteType,
+                    PermissionTypeFactory.CameraType
                 ) {
                     Log.e(this.localClassName, "是否成功授权:$it")
                 }

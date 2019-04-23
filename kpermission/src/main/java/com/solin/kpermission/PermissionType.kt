@@ -3,10 +3,12 @@ package com.solin.kpermission
 import android.Manifest
 import android.os.Build
 
-sealed class PermissionType {
-    abstract fun getPermissions(): MutableSet<String>
+interface PermissionType {
+    fun getPermissions(): MutableSet<String>
+}
 
-    object ApkType : PermissionType() {
+sealed class PermissionTypeFactory {
+    object ApkType : PermissionType {
         override fun getPermissions(): MutableSet<String> {
             val mutableSet = mutableSetOf<String>()
             mutableSet.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)//文件写入
@@ -27,7 +29,7 @@ sealed class PermissionType {
         }
     }
 
-    object FileReadWriteType : PermissionType() {
+    object FileReadWriteType : PermissionType {
         override fun getPermissions(): MutableSet<String> {
             val mutableSet = mutableSetOf<String>()
             mutableSet.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)//"文件写入"
@@ -38,7 +40,7 @@ sealed class PermissionType {
         }
     }
 
-    object CameraType : PermissionType() {
+    object CameraType : PermissionType {
         override fun getPermissions(): MutableSet<String> {
             val mutableSet = FileReadWriteType.getPermissions()
             mutableSet.add(Manifest.permission.CAMERA)
@@ -46,3 +48,4 @@ sealed class PermissionType {
         }
     }
 }
+

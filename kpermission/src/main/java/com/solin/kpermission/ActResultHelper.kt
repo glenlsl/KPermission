@@ -104,7 +104,10 @@ class ActResultHelper : LifecycleObserver {
      */
     fun requestPermissionsByType(vararg types: PermissionType, callback: (isGranted: Boolean) -> Unit) {
         val set = mutableSetOf<String>()
-        types.forEach { set += it.getPermissions() }
+        for (type in types) set += type.getPermissions()
+        if (set.isEmpty()) {
+            throw IllegalArgumentException("parameter cannot be empty")
+        }
         val permissions = set.filterNot { checkPermission(it) }.toTypedArray()
         if (permissions.isEmpty()) {
             callback.invoke(true)
