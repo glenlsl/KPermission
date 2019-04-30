@@ -74,7 +74,7 @@ internal class ActResultFragment : Fragment() {
                         }
                     }
                 }
-                mPermissionCallback!!.value = false
+//                mPermissionCallback!!.value = false
             } else {
                 mPermissionCallback!!.value = true
             }

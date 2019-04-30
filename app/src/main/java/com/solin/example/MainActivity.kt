@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
                  }*/
             //获取APK安装权限
             ActResultHelper.from(this)
-                .isShowDialog(false)
+                .isShowDialog(true)
                 .requestPermissionsByType(
                     PermissionTypeFactory.ApkType,
                     PermissionTypeFactory.FileReadWriteType,
