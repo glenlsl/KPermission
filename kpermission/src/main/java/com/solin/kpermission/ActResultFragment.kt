@@ -19,6 +19,7 @@ import kotlin.random.nextInt
 internal class ActResultFragment : Fragment() {
     private val REQUEST_CODE = 0x99//权限请求码
     var openDialog = false
+    var failureReturn = false
     private val mCallbackMap = SparseArray<MutableLiveData<ActResult>>()
     //    private val mPermissionsMap = WeakHashMap<String, MutableLiveData<Permission>>()//权限申请
     private var mPermissionCallback: MutableLiveData<Boolean>? = null//权限申请
@@ -62,19 +63,22 @@ internal class ActResultFragment : Fragment() {
                 permissions.filterIndexed { index, _ -> grantResults[index] == PackageManager.PERMISSION_DENIED }
                     .toMutableList()
             if (noPermissions.isNotEmpty()) {
-                activity?.apply {
-                    if (openDialog) {
-                        PermissionRequestDialog(this, noPermissions).show()
-                    } else {
-                        window?.decorView?.findViewById<View>(android.R.id.content)?.let {
-                            Snackbar.make(it, "提示:还有有未授权的权限", Snackbar.LENGTH_LONG)
-                                .setAction("弹出未授权列表") {
-                                    PermissionRequestDialog(this, noPermissions).show()
-                                }.show()
+                if (failureReturn) {
+                    mPermissionCallback!!.value = false
+                } else {
+                    activity?.apply {
+                        if (openDialog) {
+                            PermissionRequestDialog(this, noPermissions).show()
+                        } else {
+                            window?.decorView?.findViewById<View>(android.R.id.content)?.let {
+                                Snackbar.make(it, "提示:还有有未授权的权限", Snackbar.LENGTH_LONG)
+                                    .setAction("弹出未授权列表") {
+                                        PermissionRequestDialog(this, noPermissions).show()
+                                    }.show()
+                            }
                         }
                     }
                 }
-//                mPermissionCallback!!.value = false
             } else {
                 mPermissionCallback!!.value = true
             }

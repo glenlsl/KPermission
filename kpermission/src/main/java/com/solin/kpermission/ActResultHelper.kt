@@ -121,6 +121,10 @@ class ActResultHelper : LifecycleObserver {
         return this
     }
 
+    fun failureReturn(failureReturn: Boolean) {
+        ActResultFragment.instance.failureReturn = failureReturn
+    }
+
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     private fun destroy() {
         instance = instance?.run {
