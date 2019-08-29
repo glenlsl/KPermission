@@ -1,12 +1,12 @@
 package com.solin.kpermission
 
-import android.arch.lifecycle.MutableLiveData
-import android.arch.lifecycle.Observer
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.support.design.widget.Snackbar
-import android.support.v4.app.Fragment
+import com.google.android.material.snackbar.Snackbar
+import androidx.fragment.app.Fragment
 import android.util.SparseArray
 import android.view.View
 import java.lang.ref.WeakReference
@@ -16,7 +16,7 @@ import kotlin.random.nextInt
 /**
  *  空白Fragment 中转作用
  */
-internal class ActResultFragment : Fragment() {
+internal class ActResultFragment : androidx.fragment.app.Fragment() {
     private val REQUEST_CODE = 0x99//权限请求码
     var openDialog = false
     var failureReturn = false
@@ -47,8 +47,9 @@ internal class ActResultFragment : Fragment() {
 
     fun requestPermissions(needRequests: Array<String>, callback: (isGranted: Boolean) -> Unit) {
         if (needRequests.isNotEmpty()) {
-            mPermissionCallback = MutableLiveData<Boolean>().apply {
-                observe(instance, Observer {
+            mPermissionCallback = MutableLiveData()
+            get()?.run {
+                mPermissionCallback!!.observe(this, Observer {
                     callback.invoke(it!!)
                 })
             }
@@ -56,7 +57,11 @@ internal class ActResultFragment : Fragment() {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE) {
             val noPermissions =
@@ -98,9 +103,14 @@ internal class ActResultFragment : Fragment() {
 
     //TODO: 单例模式
     companion object {
-        val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-            ActResultFragment()
+        //        val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+//
+//        }
+        private val weakReference: WeakReference<ActResultFragment> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
+            WeakReference(ActResultFragment())
         }
+
+        fun get() = weakReference.get()
     }
 }
 

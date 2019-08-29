@@ -17,9 +17,11 @@ sealed class PermissionTypeFactory {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     mutableSet.add(Manifest.permission.REQUEST_INSTALL_PACKAGES)//安装未知应用
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        ActResultFragment.instance.requireContext().let {
-                            if (it.packageManager.canRequestPackageInstalls()) {
-                                mutableSet.remove(Manifest.permission.REQUEST_INSTALL_PACKAGES)
+                        ActResultFragment.get()?.run {
+                            requireContext().let {
+                                if (it.packageManager.canRequestPackageInstalls()) {
+                                    mutableSet.remove(Manifest.permission.REQUEST_INSTALL_PACKAGES)
+                                }
                             }
                         }
                     }

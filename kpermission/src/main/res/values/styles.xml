@@ -2,7 +2,7 @@
 <resources>
     <!-- ==================权限申请对话框（alertdialog）================== -->
     <style name="style_permission_dialog" parent="AlertDialog.AppCompat.Light">
-    <!--<style name="style_permission_dialog" parent="Theme.AppCompat.Light.Dialog.Alert">-->
+        <!--<style name="style_permission_dialog" parent="Theme.AppCompat.Light.Dialog.Alert">-->
         <!-- Dialog的windowFrame框为无 -->
         <item name="android:windowFrame">@null</item>
         <!-- 是否显示title -->
@@ -17,4 +17,16 @@
         <item name="android:backgroundDimEnabled">true</item>
     </style>
 
+
+    <style name="AnimActivity" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowAnimationStyle">@style/AnimationActivity</item>
+        <item name="android:windowNoTitle">true</item>
+    </style>
+
+    <style name="AnimationActivity" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@anim/act_fade_in</item>
+        <item name="android:activityOpenExitAnimation">@anim/act_fade_out</item>
+        <item name="android:activityCloseEnterAnimation">@anim/act_fade_in</item>
+        <item name="android:activityCloseExitAnimation">@anim/act_fade_out</item>
+    </style>
 </resources>

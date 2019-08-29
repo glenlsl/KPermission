@@ -6,11 +6,11 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.support.v4.app.FragmentActivity
-import android.support.v4.content.FileProvider
-import android.support.v7.app.AlertDialog
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
+import androidx.fragment.app.FragmentActivity
+import androidx.core.content.FileProvider
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.dialog_permission.*
@@ -24,11 +24,11 @@ import java.io.IOException
  *  @time 2018-4-4 12:22
  */
 class PermissionRequestDialog @JvmOverloads constructor(
-    private val context: FragmentActivity,
+    private val fragmentActivity: androidx.fragment.app.FragmentActivity,
     mutableList: MutableList<String>,
     themeResId: Int = R.style.style_permission_dialog,
     private val apkFile: File? = null
-) : AlertDialog(context, themeResId) {
+) : AlertDialog(fragmentActivity, themeResId) {
 
     private var adapter = SimpleDataAdapter()
 
@@ -70,7 +70,11 @@ class PermissionRequestDialog @JvmOverloads constructor(
     }
 
     private fun initView() {
-        recyclerView.layoutManager = LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false)
+        recyclerView.layoutManager = androidx.recyclerview.widget.LinearLayoutManager(
+            fragmentActivity,
+            androidx.recyclerview.widget.LinearLayoutManager.VERTICAL,
+            false
+        )
         recyclerView.adapter = adapter
         btnOk.setOnClickListener {
             requestPermission()
@@ -83,13 +87,13 @@ class PermissionRequestDialog @JvmOverloads constructor(
                 val data = adapter.datas[i]
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
                     && data.permission == Manifest.permission.REQUEST_INSTALL_PACKAGES
-                    && !context.packageManager.canRequestPackageInstalls()
+                    && !fragmentActivity.packageManager.canRequestPackageInstalls()
                 ) { //注意这个是8.0安装未知应用时需要的新API
-                    val packageURI = Uri.parse("package:" + context.packageName)
+                    val packageURI = Uri.parse("package:" + fragmentActivity.packageName)
                     val intent = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, packageURI)
-                    ActResultHelper.from(context)
+                    ActResultHelper.from(fragmentActivity)
                         .startActivityForResult(intent) { _, _ ->
-                            if (context.packageManager.canRequestPackageInstalls()) {
+                            if (fragmentActivity.packageManager.canRequestPackageInstalls()) {
                                 apkFile?.run { installAPK(this) }
                                 adapter.datas.remove(data)
                                 if (adapter.itemCount == 0) {
@@ -103,10 +107,10 @@ class PermissionRequestDialog @JvmOverloads constructor(
                 }
             }
             val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-            val uri = Uri.fromParts("package", context.packageName, null)
+            val uri = Uri.fromParts("package", fragmentActivity.packageName, null)
             intent.data = uri
-            ActResultHelper.from(context).startActivityForResult(intent) { _, _ ->
-                ActResultHelper.from(context)
+            ActResultHelper.from(fragmentActivity).startActivityForResult(intent) { _, _ ->
+                ActResultHelper.from(fragmentActivity)
                     .checkPermissions(*adapter.datas.map { it.permission }.toTypedArray()) { permission, isGranted ->
                         if (isGranted) {
                             val index = adapter.datas.indexOfFirst { it.permission == permission }
@@ -133,7 +137,7 @@ class PermissionRequestDialog @JvmOverloads constructor(
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            val contentUri = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".provider", apkFile)
+            val contentUri = FileProvider.getUriForFile(fragmentActivity, BuildConfig.LIBRARY_PACKAGE_NAME + ".provider", apkFile)
             //参数二:应用包名+".fileProvider"(和步骤二中的Manifest文件中的provider节点下的authorities对应)
             intent.setDataAndType(contentUri, "application/vnd.android.package-archive")
         } else {
@@ -149,11 +153,11 @@ class PermissionRequestDialog @JvmOverloads constructor(
             intent.setDataAndType(Uri.fromFile(apkFile), "application/vnd.android.package-archive")
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
-        context.startActivity(intent)
+        fragmentActivity.startActivity(intent)
     }
 }
 
-class SimpleDataAdapter : RecyclerView.Adapter<ViewHolder>() {
+class SimpleDataAdapter : androidx.recyclerview.widget.RecyclerView.Adapter<ViewHolder>() {
     var datas = mutableListOf<RecyclerItem>()
     override fun getItemCount(): Int = datas.size
 
@@ -165,7 +169,7 @@ class SimpleDataAdapter : RecyclerView.Adapter<ViewHolder>() {
 }
 
 class ViewHolder(parent: ViewGroup) :
-    RecyclerView.ViewHolder(
+    androidx.recyclerview.widget.RecyclerView.ViewHolder(
         LayoutInflater.from(parent.context).inflate(
             R.layout.dialog_permission_item,
             parent,

@@ -1,12 +1,13 @@
 package com.solin.kpermission
 
-import android.arch.lifecycle.*
+import androidx.lifecycle.*
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.support.v4.app.Fragment
-import android.support.v4.app.FragmentActivity
-import android.support.v4.app.FragmentManager
-import android.support.v4.content.ContextCompat
+import android.util.Log
+import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
+import androidx.fragment.app.FragmentManager
 import java.lang.ref.WeakReference
 
 /**
@@ -17,6 +18,7 @@ import java.lang.ref.WeakReference
 class ActResultHelper : LifecycleObserver {
     private var activity: WeakReference<FragmentActivity>? = null
     private var fragment: WeakReference<Fragment>? = null
+    private var fragmentManager: FragmentManager? = null
 
     private constructor() : super()
 
@@ -52,7 +54,9 @@ class ActResultHelper : LifecycleObserver {
     }
 
     private fun commitFragment(fragmentManager: FragmentManager) {
-        val fragment = (fragmentManager.findFragmentByTag(TAG) ?: ActResultFragment.instance) as ActResultFragment
+        this.fragmentManager = fragmentManager
+        val fragment =
+            (fragmentManager.findFragmentByTag(TAG) ?: ActResultFragment.get()) as ActResultFragment
         if (!fragment.isAdded) {
             fragmentManager.beginTransaction()
                 .add(fragment, TAG)//将响应需要用的空白fragment添加到需要响应页面绑定生命周期
@@ -60,19 +64,27 @@ class ActResultHelper : LifecycleObserver {
         }
     }
 
-    fun startActivityForResult(intent: Intent, callback: (resultCode: Int, dataIntent: Intent?) -> Unit) {
-        val mutableLiveData = MutableLiveData<ActResult>().apply {
-            observe(ActResultFragment.instance, Observer {
+    fun startActivityForResult(
+        intent: Intent,
+        callback: (resultCode: Int, dataIntent: Intent?) -> Unit
+    ) {
+        val mutableLiveData = MutableLiveData<ActResult>()
+        ActResultFragment.get()?.run {
+            mutableLiveData.observe(this, Observer {
                 callback(it!!.resultCode, it.resultIntent)
             })
+            startActForResult(intent, mutableLiveData)
         }
-        ActResultFragment.instance.startActForResult(intent, mutableLiveData)
+
     }
 
     /**
      * 批量检测权限是否授权
      */
-    fun checkPermissions(vararg permissions: String, hasPermission: (permission: String, isGranted: Boolean) -> Unit) =
+    fun checkPermissions(
+        vararg permissions: String,
+        hasPermission: (permission: String, isGranted: Boolean) -> Unit
+    ) =
         apply {
             for (permission in permissions) hasPermission(permission, checkPermission(permission))
         }
@@ -80,7 +92,7 @@ class ActResultHelper : LifecycleObserver {
     fun checkPermission(permission: String): Boolean {
         //todo 这里的上下文获取在手动关闭权限后返回app 这时app被回收报null，fragment没有跟着被回收，暂未有好的解决办法，只能在activity中不保存fragment，让其findFragmentByTag为null
         return ContextCompat.checkSelfPermission(
-            ActResultFragment.instance.requireContext(),
+            ActResultFragment.get()!!.requireContext(),
             permission
         ) == PackageManager.PERMISSION_GRANTED//已授权
     }
@@ -94,7 +106,7 @@ class ActResultHelper : LifecycleObserver {
         if (array.isEmpty()) {
             callback.invoke(true)
         } else {
-            ActResultFragment.instance.requestPermissions(array, callback)
+            ActResultFragment.get()!!.requestPermissions(array, callback)
         }
     }
 
@@ -102,7 +114,10 @@ class ActResultHelper : LifecycleObserver {
      * 按功能获取权限
      * @param types APK_PERMISSION,FILE_PERMISSION
      */
-    fun requestPermissionsByType(vararg types: PermissionType, callback: (isGranted: Boolean) -> Unit) {
+    fun requestPermissionsByType(
+        vararg types: PermissionType,
+        callback: (isGranted: Boolean) -> Unit
+    ) {
         val set = mutableSetOf<String>()
         for (type in types) set += type.getPermissions()
         if (set.isEmpty()) {
@@ -112,22 +127,33 @@ class ActResultHelper : LifecycleObserver {
         if (permissions.isEmpty()) {
             callback.invoke(true)
         } else {
-            ActResultFragment.instance.requestPermissions(permissions, callback)
+            ActResultFragment.get()?.requestPermissions(permissions, callback)
         }
     }
 
     fun isShowDialog(isShow: Boolean): ActResultHelper {
-        ActResultFragment.instance.openDialog = isShow
+        ActResultFragment.get()?.openDialog = isShow
         return this
     }
 
     fun failureReturn(failureReturn: Boolean) {
-        ActResultFragment.instance.failureReturn = failureReturn
+        ActResultFragment.get()?.failureReturn = failureReturn
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     private fun destroy() {
+        Log.d(TAG, "destroy")
         instance = instance?.run {
+            ActResultFragment.get()?.let {
+                fragmentManager?.run {
+                    beginTransaction()
+                        .detach(it)
+                        .remove(it)
+                        .commitAllowingStateLoss()
+                    it.onDestroyView()
+                }
+                fragmentManager = null
+            }
             activity = null
             fragment = null
             null
