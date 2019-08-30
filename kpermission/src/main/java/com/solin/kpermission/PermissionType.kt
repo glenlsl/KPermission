@@ -1,15 +1,16 @@
 package com.solin.kpermission
 
 import android.Manifest
+import android.content.Context
 import android.os.Build
 
 interface PermissionType {
-    fun getPermissions(): MutableSet<String>
+    fun getPermissions(context: Context? = null): MutableSet<String>
 }
 
 sealed class PermissionTypeFactory {
     object ApkType : PermissionType {
-        override fun getPermissions(): MutableSet<String> {
+        override fun getPermissions(context: Context?): MutableSet<String> {
             val mutableSet = mutableSetOf<String>()
             mutableSet.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)//文件写入
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -17,11 +18,9 @@ sealed class PermissionTypeFactory {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     mutableSet.add(Manifest.permission.REQUEST_INSTALL_PACKAGES)//安装未知应用
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        ActResultFragment.get()?.run {
-                            requireContext().let {
-                                if (it.packageManager.canRequestPackageInstalls()) {
-                                    mutableSet.remove(Manifest.permission.REQUEST_INSTALL_PACKAGES)
-                                }
+                        context?.let {
+                            if (it.packageManager.canRequestPackageInstalls()) {
+                                mutableSet.remove(Manifest.permission.REQUEST_INSTALL_PACKAGES)
                             }
                         }
                     }
@@ -32,7 +31,7 @@ sealed class PermissionTypeFactory {
     }
 
     object FileReadWriteType : PermissionType {
-        override fun getPermissions(): MutableSet<String> {
+        override fun getPermissions(context: Context?): MutableSet<String> {
             val mutableSet = mutableSetOf<String>()
             mutableSet.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)//"文件写入"
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -43,7 +42,7 @@ sealed class PermissionTypeFactory {
     }
 
     object CameraType : PermissionType {
-        override fun getPermissions(): MutableSet<String> {
+        override fun getPermissions(context: Context?): MutableSet<String> {
             val mutableSet = FileReadWriteType.getPermissions()
             mutableSet.add(Manifest.permission.CAMERA)
             return mutableSet

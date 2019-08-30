@@ -1,26 +1,26 @@
 package com.solin.kpermission
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import com.google.android.material.snackbar.Snackbar
-import androidx.fragment.app.Fragment
-import android.util.SparseArray
 import android.view.View
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import com.google.android.material.snackbar.Snackbar
 import java.lang.ref.WeakReference
+import java.util.*
 import kotlin.random.Random
 import kotlin.random.nextInt
 
 /**
  *  空白Fragment 中转作用
  */
-internal class ActResultFragment : androidx.fragment.app.Fragment() {
-    private val REQUEST_CODE = 0x99//权限请求码
+class ActResultFragment : Fragment() {
+
     var openDialog = false
-    var failureReturn = false
-    private val mCallbackMap = SparseArray<MutableLiveData<ActResult>>()
+    var failureReturn = false//是否弹出提示(对话框/toast)
+    private val mCallbackMap = WeakHashMap<Int, MutableLiveData<ActResult>>()
     //    private val mPermissionsMap = WeakHashMap<String, MutableLiveData<Permission>>()//权限申请
     private var mPermissionCallback: MutableLiveData<Boolean>? = null//权限申请
 
@@ -32,15 +32,15 @@ internal class ActResultFragment : androidx.fragment.app.Fragment() {
 
     fun startActForResult(intent: Intent, mutableLiveData: MutableLiveData<ActResult>) {
         val requestCode = makeRequestCode()
-        mCallbackMap.put(requestCode, mutableLiveData)
+        mCallbackMap[requestCode] = mutableLiveData
         startActivityForResult(intent, requestCode)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (mCallbackMap.indexOfKey(requestCode) >= 0) {
+        if (mCallbackMap.containsKey(requestCode)) {
             val liveData = mCallbackMap[requestCode]
-            liveData.value = ActResult(resultCode, data)
+            liveData?.value = ActResult(resultCode, data)
             mCallbackMap.remove(requestCode)
         }
     }
@@ -48,11 +48,9 @@ internal class ActResultFragment : androidx.fragment.app.Fragment() {
     fun requestPermissions(needRequests: Array<String>, callback: (isGranted: Boolean) -> Unit) {
         if (needRequests.isNotEmpty()) {
             mPermissionCallback = MutableLiveData()
-            get()?.run {
-                mPermissionCallback?.observe(this, Observer {
-                    it?.run(callback)
-                })
-            }
+            mPermissionCallback?.observe(this, Observer {
+                it?.run(callback)
+            })
             requestPermissions(needRequests, REQUEST_CODE)
         }
     }
@@ -97,20 +95,23 @@ internal class ActResultFragment : androidx.fragment.app.Fragment() {
         var requestCode: Int
         do {
             requestCode = Random.nextInt(999..65535)
-        } while (mCallbackMap.indexOfKey(requestCode) >= 0)
+        } while (mCallbackMap.containsKey(requestCode))
         return requestCode
     }
 
     //TODO: 单例模式
     companion object {
-        //        val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-//
-//        }
-        private val weakReference: WeakReference<ActResultFragment> by lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-            WeakReference(ActResultFragment())
-        }
+        private const val REQUEST_CODE = 0x99//权限请求码
+        private var instance = WeakReference(ActResultFragment())
+            get() {
+                if (field.get() == null) {
+                    field.clear()
+                    field = WeakReference(ActResultFragment())
+                }
+                return field
+            }
 
-        fun get() = weakReference.get()
+        fun get() = instance.get()!!
     }
 }
 

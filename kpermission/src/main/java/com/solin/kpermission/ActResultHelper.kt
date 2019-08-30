@@ -1,6 +1,5 @@
 package com.solin.kpermission
 
-import androidx.lifecycle.*
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
@@ -8,7 +7,10 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.*
 import java.lang.ref.WeakReference
+import kotlin.properties.ReadWriteProperty
+import kotlin.reflect.KProperty
 
 /**
  *  权限申请、结果反馈以回调形式封装
@@ -19,6 +21,7 @@ class ActResultHelper : LifecycleObserver {
     private var activity: WeakReference<FragmentActivity>? = null
     private var fragment: WeakReference<Fragment>? = null
     private var fragmentManager: FragmentManager? = null
+    private var resultFragment: ActResultFragment? by WeakAny(ActResultFragment())
 
     private constructor() : super()
 
@@ -55,7 +58,7 @@ class ActResultHelper : LifecycleObserver {
     private fun commitFragment(fragmentManager: FragmentManager) {
         this.fragmentManager = fragmentManager
         val fragment =
-            (fragmentManager.findFragmentByTag(TAG) ?: ActResultFragment.get()) as ActResultFragment
+            (fragmentManager.findFragmentByTag(TAG) ?: resultFragment) as ActResultFragment
         if (!fragment.isAdded) {
             fragmentManager.beginTransaction()
                 .add(fragment, TAG)//将响应需要用的空白fragment添加到需要响应页面绑定生命周期
@@ -68,13 +71,13 @@ class ActResultHelper : LifecycleObserver {
         callback: (resultCode: Int, dataIntent: Intent?) -> Unit
     ) {
         val mutableLiveData = MutableLiveData<ActResult>()
-        ActResultFragment.get()?.run {
+        resultFragment?.run {
             mutableLiveData.observe(this, Observer {
                 it?.run {
                     callback(resultCode, resultIntent)
                 }
             })
-            startActForResult(intent, mutableLiveData)
+            this.startActForResult(intent, mutableLiveData)
         }
 
     }
@@ -92,10 +95,9 @@ class ActResultHelper : LifecycleObserver {
 
     fun checkPermission(permission: String): Boolean {
         //todo 这里的上下文获取在手动关闭权限后返回app 这时app被回收报null，fragment没有跟着被回收，暂未有好的解决办法，只能在activity中不保存fragment，让其findFragmentByTag为null
-        return ContextCompat.checkSelfPermission(
-            ActResultFragment.get()!!.requireContext(),
-            permission
-        ) == PackageManager.PERMISSION_GRANTED//已授权
+        return resultFragment?.requireContext()?.let {
+            ContextCompat.checkSelfPermission(it, permission)
+        } == PackageManager.PERMISSION_GRANTED//已授权
     }
 
     /**
@@ -107,7 +109,7 @@ class ActResultHelper : LifecycleObserver {
         if (array.isEmpty()) {
             callback.invoke(true)
         } else {
-            ActResultFragment.get()!!.requestPermissions(array, callback)
+            resultFragment?.requestPermissions(array, callback)
         }
     }
 
@@ -120,32 +122,40 @@ class ActResultHelper : LifecycleObserver {
         callback: (isGranted: Boolean) -> Unit
     ) {
         val set = mutableSetOf<String>()
-        for (type in types) set += type.getPermissions()
-        if (set.isEmpty()) {
-            throw IllegalArgumentException("parameter cannot be empty")
-        }
+        for (type in types) set += type.getPermissions(resultFragment?.context)
+        require(set.isNotEmpty()) { "parameter cannot be empty" }
         val permissions = set.filterNot { checkPermission(it) }.toTypedArray()
         if (permissions.isEmpty()) {
             callback.invoke(true)
         } else {
-            ActResultFragment.get()?.requestPermissions(permissions, callback)
+            resultFragment?.requestPermissions(permissions, callback)
         }
     }
 
     fun isShowDialog(isShow: Boolean): ActResultHelper {
-        ActResultFragment.get()?.openDialog = isShow
+        resultFragment?.openDialog = isShow
         return this
     }
 
     fun failureReturn(failureReturn: Boolean) {
-        ActResultFragment.get()?.failureReturn = failureReturn
+        resultFragment?.failureReturn = failureReturn
     }
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
-    private fun destroy() {
+    fun destroy() {
         Log.d(TAG, "destroy")
         instance = instance?.run {
-            ActResultFragment.get()?.let {
+            //            resultFragment??.let {
+//                fragmentManager?.run {
+//                    beginTransaction()
+//                        .detach(it)
+//                        .remove(it)
+//                        .commitAllowingStateLoss()
+//                    it.onDestroyView()
+//                }
+//                fragmentManager = null
+//            }
+            resultFragment?.let {
                 fragmentManager?.run {
                     beginTransaction()
                         .detach(it)
@@ -154,6 +164,7 @@ class ActResultHelper : LifecycleObserver {
                     it.onDestroyView()
                 }
                 fragmentManager = null
+                resultFragment = null
             }
             activity = null
             fragment = null
@@ -162,4 +173,22 @@ class ActResultHelper : LifecycleObserver {
     }
 }
 
+class WeakAny<T>(private val any: T) : ReadWriteProperty<Any, T?> {
+    private var weakReference = WeakReference(any)
+    override fun getValue(thisRef: Any, property: KProperty<*>): T? {
+        if (weakReference.get() == null) {
+            weakReference.clear()
+            weakReference = WeakReference(any)
+        }
+        return weakReference.get()!!
+    }
 
+    override fun setValue(thisRef: Any, property: KProperty<*>, value: T?) {
+        if (value == null) {
+            weakReference.clear()
+        } else {
+            weakReference = WeakReference(value)
+        }
+    }
+
+}
