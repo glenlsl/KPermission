@@ -49,8 +49,8 @@ internal class ActResultFragment : androidx.fragment.app.Fragment() {
         if (needRequests.isNotEmpty()) {
             mPermissionCallback = MutableLiveData()
             get()?.run {
-                mPermissionCallback!!.observe(this, Observer {
-                    callback.invoke(it!!)
+                mPermissionCallback?.observe(this, Observer {
+                    it?.run(callback)
                 })
             }
             requestPermissions(needRequests, REQUEST_CODE)

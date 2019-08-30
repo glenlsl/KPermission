@@ -34,7 +34,6 @@ class ActResultHelper : LifecycleObserver {
         fragment.lifecycle.addObserver(this)
     }
 
-    //todo:伴生对象静态属性
     companion object {
         const val TAG = "ActResultHelper"
         private var instance: ActResultHelper? = null
@@ -71,7 +70,9 @@ class ActResultHelper : LifecycleObserver {
         val mutableLiveData = MutableLiveData<ActResult>()
         ActResultFragment.get()?.run {
             mutableLiveData.observe(this, Observer {
-                callback(it!!.resultCode, it.resultIntent)
+                it?.run {
+                    callback(resultCode, resultIntent)
+                }
             })
             startActForResult(intent, mutableLiveData)
         }
