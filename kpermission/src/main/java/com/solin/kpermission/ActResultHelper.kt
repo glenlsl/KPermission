@@ -20,7 +20,6 @@ import kotlin.reflect.KProperty
 class ActResultHelper : LifecycleObserver {
     private var activity: WeakReference<FragmentActivity>? = null
     private var fragment: WeakReference<Fragment>? = null
-    private var fragmentManager: FragmentManager? = null
     private var resultFragment: ActResultFragment? by WeakAny(ActResultFragment())
 
     private constructor() : super()
@@ -28,12 +27,14 @@ class ActResultHelper : LifecycleObserver {
     private constructor(activity: FragmentActivity) : this() {
         this.activity = WeakReference(activity)
         commitFragment(this.activity!!.get()!!.supportFragmentManager)
+        activity.lifecycle.removeObserver(this)
         activity.lifecycle.addObserver(this)
     }
 
     private constructor(fragment: Fragment) : this() {
         this.fragment = WeakReference(fragment)
         commitFragment(this.fragment!!.get()!!.childFragmentManager)
+        fragment.lifecycle.removeObserver(this)
         fragment.lifecycle.addObserver(this)
     }
 
@@ -56,13 +57,23 @@ class ActResultHelper : LifecycleObserver {
     }
 
     private fun commitFragment(fragmentManager: FragmentManager) {
-        this.fragmentManager = fragmentManager
         val fragment =
-            (fragmentManager.findFragmentByTag(TAG) ?: resultFragment) as ActResultFragment
-        if (!fragment.isAdded) {
+            fragmentManager.findFragmentByTag(TAG) ?: resultFragment
+        if (fragmentManager.findFragmentByTag(TAG) == null) {
+            resultFragment?.fragmentManager?.run {
+                beginTransaction()
+                    .remove(resultFragment!!)
+                    .commitAllowingStateLoss()
+            }
             fragmentManager.beginTransaction()
-                .add(fragment, TAG)//将响应需要用的空白fragment添加到需要响应页面绑定生命周期
+                .add(resultFragment!!, TAG)//将响应需要用的空白fragment添加关联到页面
                 .commitNow()
+        } else {
+            if (fragment != null && !fragment.isAdded) {
+                fragmentManager.beginTransaction()
+                    .add(fragment, TAG)//将响应需要用的空白fragment添加关联到页面
+                    .commitNow()
+            }
         }
     }
 
@@ -145,25 +156,15 @@ class ActResultHelper : LifecycleObserver {
     fun destroy() {
         Log.d(TAG, "destroy")
         instance = instance?.run {
-            //            resultFragment??.let {
-//                fragmentManager?.run {
-//                    beginTransaction()
-//                        .detach(it)
-//                        .remove(it)
-//                        .commitAllowingStateLoss()
-//                    it.onDestroyView()
-//                }
-//                fragmentManager = null
-//            }
             resultFragment?.let {
-                fragmentManager?.run {
+                resultFragment?.requireFragmentManager()?.run {
                     beginTransaction()
                         .detach(it)
                         .remove(it)
                         .commitAllowingStateLoss()
                     it.onDestroyView()
                 }
-                fragmentManager = null
+//                fragmentManager = null
                 resultFragment = null
             }
             activity = null
